@@ -3,8 +3,6 @@ package com.scmspain.architecturedemo;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.text.method.BaseKeyListener;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,7 +59,7 @@ public class AdsListActivity extends Activity {
 
         private final AdsListPresenter<String,String> presenter;
 
-        private class Interactor implements AdsListPresenter.AdsListInteractor<String,String> {
+        private class Interactor implements AdsListPresenter.RXAdsListInteractor<String,String> {
             @Override
             public void setNewSearch(String s) {
 
@@ -73,7 +71,7 @@ public class AdsListActivity extends Activity {
             }
 
             @Override
-            public ArrayList<String> loadAds() {
+            public rx.Observable<ArrayList<String>> loadAds() {
                 return null;
             }
 
@@ -84,7 +82,7 @@ public class AdsListActivity extends Activity {
         }
 
         public PlaceholderFragment() {
-            presenter = new AdsListPresenter<String, String>(new Interactor());
+            presenter = new AdsListPresenter<>(new Interactor());
         }
 
         @Override

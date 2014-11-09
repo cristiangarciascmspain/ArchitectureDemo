@@ -4,8 +4,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -13,20 +11,15 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @Config(emulateSdk=18)
 @RunWith(RobolectricTestRunner.class)
@@ -39,9 +32,9 @@ public class AdsListPresenterTest {
     @Before
     public void setUp() {
         interactor = mock(AdsListPresenter.RXAdsListInteractor.class);
-        when(interactor.loadAds()).thenReturn(Observable.just(new ArrayList<>()));
+        given(interactor.loadAds()).willReturn(Observable.just(new ArrayList<>()));
         view = mock(AdsListPresenter.AdsListView.class);
-        presenter = new AdsListPresenter<>(interactor, AndroidSchedulers.mainThread(), AndroidSchedulers.mainThread());
+        presenter = new AdsListPresenter<>(interactor, Schedulers.immediate(), Schedulers.immediate());
         presenter.start(view);
     }
 
@@ -164,7 +157,6 @@ public class AdsListPresenterTest {
         presenter.setNewSearch(anyString());
 
         // WHEN
-
         presenter.showingItemAtIndex(0);
 
         // THEN
@@ -176,9 +168,10 @@ public class AdsListPresenterTest {
         ArrayList<String> ads = new ArrayList<String>() {{
             add("one");
         }};
-        given(interactor.loadAds()).willReturn(Observable.just(ads).delay(100,TimeUnit.MILLISECONDS));
+        given(interactor.loadAds()).willReturn(Observable.just(ads).delay(10,TimeUnit.MILLISECONDS));
 
-        AdsListPresenter<String, String> presenter = new AdsListPresenter<>(interactor, AndroidSchedulers.mainThread(), Schedulers.io());
+        presenter.stop();
+        presenter = new AdsListPresenter<>(interactor, Schedulers.io(), Schedulers.immediate());
         presenter.start(view);
 
         // WHEN
@@ -186,6 +179,6 @@ public class AdsListPresenterTest {
 
         // THEN
         verify(view, times(0)).showContentList();
-        verify(view, timeout(1000).times(1)).showContentList();
+        verify(view, timeout(20).times(1)).showContentList();
     }
 }

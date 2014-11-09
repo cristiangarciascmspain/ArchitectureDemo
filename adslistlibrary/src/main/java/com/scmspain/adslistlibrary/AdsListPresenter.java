@@ -4,12 +4,15 @@ import java.util.ArrayList;
 
 import rx.Observable;
 import rx.Scheduler;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class AdsListPresenter<Search,AdModel> {
     private Scheduler subscribeOn;
     private Scheduler observeOn;
+    private Subscription subscription = null;
+
     private RXAdsListInteractor<Search,AdModel> adsListInteractor;
     private AdsListView<AdModel> nullView = new NullAdsListView();
     private AdsListView<AdModel> view = nullView;
@@ -32,14 +35,17 @@ public class AdsListPresenter<Search,AdModel> {
     }
 
     public void stop(){
+        if (subscription!=null) subscription.unsubscribe();
         view = nullView;
     }
 
     public void setNewSearch(Search search) {
         adsListInteractor.setNewSearch(search);
-        rxload();
+        rxLoad();
     }
 /*
+// Sync version, reimplemented as rxLoad and rxLoadMore
+
     private void load() {
         loading = true;
         view.showLoading();
@@ -75,10 +81,10 @@ public class AdsListPresenter<Search,AdModel> {
         loading = false;
     }
 */
-    public void rxload() {
+    public void rxLoad() {
         loading = true;
         view.showLoading();
-        adsListInteractor
+        subscription = adsListInteractor
                 .loadAds()
                 .subscribeOn(subscribeOn)
                 .observeOn(observeOn)
@@ -94,11 +100,11 @@ public class AdsListPresenter<Search,AdModel> {
                     loading = false;
                 }, () -> loading = false);
     }
-    public void rxloadMore() {
+    public void rxLoadMore() {
         loading = true;
         view.removeTryAgainRow();
         view.addLoadingMoreRow();
-        adsListInteractor
+        subscription = adsListInteractor
                 .loadAds()
                 .subscribeOn(subscribeOn)
                 .observeOn(observeOn)
@@ -122,15 +128,15 @@ public class AdsListPresenter<Search,AdModel> {
 
     public void showingItemAtIndex(int position) {
         if (!loading && adsListInteractor.shouldLoadMoreOnShow(position)) {
-            rxloadMore();
+            rxLoadMore();
         }
     }
 
     public void retryLoad() {
-        rxload();
+        rxLoad();
     }
     public void retryLoadMore() {
-        rxloadMore();
+        rxLoadMore();
     }
 
 
